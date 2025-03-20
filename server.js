@@ -42,39 +42,40 @@ db.connect((err) => {
         }
         console.log('Switched to "notes" database');
 
-        // Create the 'notelist' table if it doesn't exist
-        const createNotelistTableSQL = `
-          CREATE TABLE IF NOT EXISTS notelist (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              title VARCHAR(255) NOT NULL,
-              content TEXT NOT NULL,
-              createdAt TEXT NOT NULL,
-              updatedAt TEXT
-          );
-        `;
-
-        db.query(createNotelistTableSQL, (err, results) => {
-          if (err) {
-            console.error('Error creating notelist table: ' + err.stack);
-          } else {
-            console.log('notelist table created or already exists');
-          }
-        });
-
-        // Create the 'users' table if it doesn't exist
+        // Create the 'users' table first if it doesn't exist
         const createUsersTableSQL = `
           CREATE TABLE IF NOT EXISTS users (
               id INT AUTO_INCREMENT PRIMARY KEY,
               email VARCHAR(255) NOT NULL UNIQUE,
               password VARCHAR(255) NOT NULL
-          );
+          ) ENGINE=InnoDB;
         `;
-
         db.query(createUsersTableSQL, (err, results) => {
           if (err) {
             console.error('Error creating users table: ' + err.stack);
           } else {
             console.log('users table created or already exists');
+
+            // After creating the 'users' table, create the 'notelist' table
+            const createNotelistTableSQL = `
+              CREATE TABLE IF NOT EXISTS notelist (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT,
+                userId INT NOT NULL,
+                FOREIGN KEY (userId) REFERENCES users(id)
+              ) ENGINE=InnoDB;
+            `;
+
+            db.query(createNotelistTableSQL, (err, results) => {
+              if (err) {
+                console.error('Error creating notelist table: ' + err.stack);
+              } else {
+                console.log('notelist table created or already exists');
+              }
+            });
           }
         });
       });
