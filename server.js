@@ -86,16 +86,16 @@ db.connect((err) => {
 // Create a new note
 app.post('/create', (req, res) => {
 
-  const { title, content, createdAt } = req.body;
+  const { title, content, createdAt, userId } = req.body;
 
 
-  if (!title || !content || !createdAt) {
-    return res.status(400).json({ error: 'Title, content and createdAt fields are required' });
+  if (!title || !content || !createdAt || !userId) {
+    return res.status(400).json({ error: 'Title, content, createdAt and userId fields are required' });
   }
 
 
-  const query = 'INSERT INTO notelist (title, content, createdAt) VALUES (?, ?, ?)';
-  db.query(query, [title, content, createdAt], (err, results) => {
+  const query = 'INSERT INTO notelist (title, content, createdAt, userId) VALUES (?, ?, ?, ?)';
+  db.query(query, [title, content, createdAt, userId], (err, results) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ error: 'Database error' });
@@ -119,11 +119,10 @@ app.post('/login', (req, res) => {
       console.error(err);
       return res.status(500).json({ error: 'Database error' });
     }
-    console.log(results.length)
     if (results.length <= 0) {
       return res.status(404).json({ error: 'User not found' });
     } else 
-        res.json({ user: email });
+        res.json({ user: email, id: results[0].id });
   });
 })
 
@@ -148,7 +147,7 @@ app.post('/register', (req, res) => {
           console.error(err);
           return res.status(500).json({ error: 'Database error' });
         }
-        res.status(201).json({ user: email});
+        res.status(201).json({ user: email, id: results[0].id});
     })
       
   }
@@ -197,14 +196,16 @@ app.delete('/delete/:id', (req, res) => {
 });
 
 // Get all notes
-app.get('/notes', (req, res) => {
-  const query = 'SELECT * FROM notelist ORDER BY createdAt DESC';
-  db.query(query, (err, results) => {
+app.get('/notes/:userId', (req, res) => {
+  const userId = req.params.userId;
+
+  const query = 'SELECT * FROM notelist WHERE userId = ? ORDER BY createdAt DESC';
+  db.query(query, [userId], (err, results) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ error: 'Database error' });
     }
-    res.json(results); // Send the notes as a JSON response
+    res.json(results); 
   });
 });
 
@@ -217,7 +218,7 @@ app.get('/note/:id', (req, res) => {
       console.error(err);
       return res.status(500).json({ error: 'Database error' });
     }
-    res.json(results); // Send the notes as a JSON response
+    res.json(results);
   });
 });
 
